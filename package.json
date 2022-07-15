@@ -1,0 +1,19 @@
+{
+	"name": "vue-hibana",
+	"version": "1.0.0",
+	"main": "index.js",
+	"repository": "https://github.com/AndSpark/vue-hibana.git",
+	"author": "hibana <421786477@qq.com>",
+	"license": "MIT",
+	"scripts": {
+		"dev": "vite"
+	},
+	"devDependencies": {
+		"@abraham/reflection": "^0.10.0",
+		"@vitejs/plugin-vue": "^2.3.3",
+		"@vue3-oop/plugin-vue-jsx": "^1.4.0",
+		"injection-js": "^2.4.0",
+		"vite": "^2.9.14",
+		"vue": "^3.2.37"
+	}
+}
