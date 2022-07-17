@@ -11,7 +11,7 @@
 		"lib": ["esnext", "dom"],
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
-		"useDefineForClassFields": false,
+		"useDefineForClassFields": true,
 		"importsNotUsedAsValues": "error",
 		"allowSyntheticDefaultImports": true,
 		"strictPropertyInitialization": false,

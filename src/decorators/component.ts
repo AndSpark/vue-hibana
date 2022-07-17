@@ -5,44 +5,64 @@ import {
 	type TypeProvider,
 	SkipSelf,
 	InjectionToken,
-	type ClassProvider
+	type ClassProvider,
+	Injectable
 } from 'injection-js'
-import {
-	type InjectionKey,
-	inject,
-	type ComponentOptions,
-	provide,
-	defineComponent,
-	getCurrentInstance
-} from 'vue'
+import { type InjectionKey, inject, provide, defineComponent } from 'vue'
+import { computedHandler } from './computed'
+import { onHandler } from './on'
 import { propsHandler } from './props'
 import { refHandler } from './ref'
+import { watchHandler } from './watch'
+import { watchEffectHandler } from './watchEffect'
 
 export const InjectorKey: InjectionKey<ReflectiveInjector> = Symbol('ReflectiveInjector')
 const MetadataKey = Symbol('Component')
 const MetadataProviderKey = Symbol('ResolveProviders')
-const handlerList = [refHandler]
-
-export function Component() {
+const handlerList = [refHandler, computedHandler, onHandler, watchHandler, watchEffectHandler]
+export interface ComponentOptions {
+	/**
+	 * 依赖的服务
+	 */
+	providers?: Provider[]
+	/**
+	 * 排除掉的服务
+	 */
+	exclude?: Provider[]
+	/**
+	 * 自动分析依赖
+	 */
+	autoResolveDeps?: boolean
+	/**
+	 * option是否是稳定的，
+	 * 依赖解析只会在第一次的时候解析并且缓存下来，所以options如果是动态变化的，请标记
+	 */
+	stable?: boolean
+}
+export function Component(options: ComponentOptions = {}) {
 	return function (Component: any) {
+		Reflect.defineMetadata(MetadataKey, options, Component)
+		Injectable()(Component)
 		Object.defineProperty(Component, '__vccOpts', {
 			enumerable: true,
 			configurable: true,
 			get() {
+				if (this.__vccOpts__value) return this.__vccOpts__value
 				const proto = Component.prototype
 				const props = propsHandler.handler(Component)
-
-				return defineComponent({
+				return (this.__vccOpts__value = defineComponent({
 					name: proto.name || Component.name,
 					props,
 					setup(props, ctx) {
 						const instance = resolveComponent(Component)
-						instance.$props = props
+						delete instance.$props
 						handlerList.forEach(handler => handler.handler(instance))
-
-						return instance.render.bind(instance)
+						return instance
+					},
+					render() {
+						return proto.render.call(this)
 					}
-				})
+				}))
 			}
 		})
 	}
@@ -56,7 +76,7 @@ export function resolveComponent(target: { new (...args: []): any }) {
 	let resolveProviders: ResolvedReflectiveProvider[] =
 		Reflect.getOwnMetadata(MetadataProviderKey, target) || []
 	const options: ComponentOptions | undefined = Reflect.getOwnMetadata(MetadataKey, target)
-	if (!resolveProviders || options?.stable === false) {
+	if (!resolveProviders?.length || options?.stable === false) {
 		// 依赖
 		let deps: Provider[] = [target]
 		if (options?.providers?.length) {

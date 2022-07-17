@@ -2,22 +2,61 @@ import { Props } from '@/decorators/props'
 import type { VueComponentProps } from '@/types'
 import { Component } from '@/decorators/component'
 import { Ref } from '@/decorators/ref'
-import { ref } from 'vue'
+import { Computed } from '@/decorators/computed'
+import { On } from '@/decorators/on'
+import { Service } from '@/decorators/service'
 
 class ButtonProps {
 	title: string = '按钮'
-	onClick?: () => any
+	xxx?: () => any
+}
+
+@Service()
+class DataService {
+	@Ref() dd: number = 2
+
+	@Computed()
+	get data() {
+		return this.dd * 2
+	}
+
+	set data(val) {
+		this.dd = val
+	}
 }
 
 @Component()
 class VButton {
+	constructor(private dataService: DataService) {}
+
 	@Props(ButtonProps)
 	$props: VueComponentProps<ButtonProps>
 
-	@Ref() dd: number = 2
+	@On('mounted')
+	show() {
+		console.log('onom')
+	}
+
+	@On('updated')
+	update() {
+		console.log(this)
+		console.log('upda')
+	}
 
 	render() {
-		return <button onClick={this.$props.onClick}>{this.$props.title}</button>
+		return (
+			<div>
+				<button
+					onClick={() => {
+						this.dataService.dd = this.dataService.dd + 5
+						this.$props.xxx?.()
+					}}
+				>
+					{this.$props.title}
+				</button>
+				{this.dataService.data}
+			</div>
+		)
 	}
 }
 
@@ -33,9 +72,14 @@ export default class {
 				<p>{this.data}</p>
 				<VButton
 					title='这是按钮'
-					onClick={() => {
+					xxx={() => {
 						this.data++
-						console.log(this.data)
+					}}
+				></VButton>
+				<VButton
+					title={this.title}
+					xxx={() => {
+						this.data++
 					}}
 				></VButton>
 			</div>

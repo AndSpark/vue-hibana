@@ -33,7 +33,6 @@ function resolveProps(props: Record<string, any>) {
 			targetProps[key] = {}
 		}
 	}
-
 	return targetProps
 }
 
