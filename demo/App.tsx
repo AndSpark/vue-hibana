@@ -5,6 +5,7 @@ import { Ref } from '@/decorators/ref'
 import { Computed } from '@/decorators/computed'
 import { On } from '@/decorators/on'
 import { Service } from '@/decorators/service'
+import { SkipSelf } from 'injection-js'
 
 class ButtonProps {
 	title: string = '按钮'
@@ -43,6 +44,10 @@ class VButton {
 		console.log('upda')
 	}
 
+	handleClick() {
+		console.log('click')
+	}
+
 	render() {
 		return (
 			<div>
@@ -60,7 +65,9 @@ class VButton {
 	}
 }
 
-@Component()
+@Component({
+	providers: [DataService]
+})
 export default class {
 	title: string = 'tltedsad'
 

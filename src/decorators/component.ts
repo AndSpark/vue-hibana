@@ -8,7 +8,7 @@ import {
 	type ClassProvider,
 	Injectable
 } from 'injection-js'
-import { type InjectionKey, inject, provide, defineComponent } from 'vue'
+import { type InjectionKey, inject, provide, defineComponent, getCurrentInstance } from 'vue'
 import { computedHandler } from './computed'
 import { onHandler } from './on'
 import { propsHandler } from './props'
@@ -41,12 +41,16 @@ export interface ComponentOptions {
 }
 export function Component(options: ComponentOptions = {}) {
 	return function (Component: any) {
-		Reflect.defineMetadata(MetadataKey, options, Component)
-		Injectable()(Component)
+		const params = Reflect.getMetadata('design:paramtypes', Component) as any[] | undefined
+		if (params?.length || options.providers?.length) {
+			Reflect.defineMetadata(MetadataKey, options, Component)
+			Injectable()(Component)
+		}
 		Object.defineProperty(Component, '__vccOpts', {
 			enumerable: true,
 			configurable: true,
 			get() {
+				// 缓存opts，否则会每次都重新生成一个新的组件对象
 				if (this.__vccOpts__value) return this.__vccOpts__value
 				const proto = Component.prototype
 				const props = propsHandler.handler(Component)
@@ -55,12 +59,10 @@ export function Component(options: ComponentOptions = {}) {
 					props,
 					setup(props, ctx) {
 						const instance = resolveComponent(Component)
-						delete instance.$props
+						instance.$props = props
 						handlerList.forEach(handler => handler.handler(instance))
-						return instance
-					},
-					render() {
-						return proto.render.call(this)
+						getCurrentInstance()!.data = instance
+						return instance.render.bind(instance)
 					}
 				}))
 			}
